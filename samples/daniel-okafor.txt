@@ -1,0 +1,31 @@
+Daniel Okafor
+Data Engineer
+Lagos, Nigeria (remote) · daniel.okafor@example.com · +234 1 700 0142 · github.com/dokafor-data
+
+SUMMARY
+Data engineer with 6 years designing batch and streaming pipelines. I own data platforms end to end, from ingestion to the dashboards the business reads.
+
+EXPERIENCE
+Senior Data Engineer — Paystride
+Jan 2023 – Present
+- Moved 140 daily batch jobs from cron scripts to Apache Airflow, cutting failed runs by 70%.
+- Built a Kafka streaming pipeline that delivers fraud features to the risk team within 5 seconds.
+- Modelled the finance warehouse in dbt on Snowflake with tested, documented tables.
+
+Data Engineer — Lumen Logistics
+Aug 2021 – Dec 2022
+- Wrote Spark jobs on AWS EMR that process 3 TB of shipment events per day.
+- Managed the data platform's AWS infrastructure with Terraform.
+
+Junior Data Engineer — Kora Health
+Sep 2020 – Jul 2021
+- Maintained PostgreSQL ETL jobs and built the first Metabase dashboards.
+
+EDUCATION
+BSc Computer Science — University of Lagos, 2020
+
+SKILLS
+Python, SQL, Spark, Airflow, Kafka, dbt, Snowflake, PostgreSQL, AWS, Terraform, Docker, Pandas
+
+LANGUAGES
+English (fluent), Yoruba (native)

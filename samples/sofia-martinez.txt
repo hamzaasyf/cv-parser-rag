@@ -1,0 +1,31 @@
+Sofia Martínez
+Full-Stack Developer
+Madrid, Spain · sofia.martinez@example.com · +34 910 000 271 · sofiamartinez.dev
+
+SUMMARY
+Full-stack developer with 5 years shipping web products in React and Node.js. I care about fast, accessible interfaces and clean APIs.
+
+EXPERIENCE
+Full-Stack Developer — Clarabooks
+Feb 2023 – Present
+- Rebuilt the invoicing dashboard in React and TypeScript; page load fell from 4.2 s to 1.3 s.
+- Designed a GraphQL API in Node.js over PostgreSQL used by the web and mobile apps.
+- Added an in-app assistant that answers billing questions by searching help-centre articles.
+
+Frontend Developer — Viajero Travel
+Oct 2021 – Jan 2023
+- Built the booking flow in Next.js with server-side rendering and Tailwind CSS.
+- Brought 40 pages up to WCAG 2.1 AA accessibility.
+
+Web Developer Intern — Estudio Norte
+Mar 2021 – Sep 2021
+- Built marketing sites and REST API integrations for small businesses.
+
+EDUCATION
+BSc Software Engineering — Universidad Politécnica de Madrid, 2021
+
+SKILLS
+JavaScript, TypeScript, React, Next.js, Node.js, GraphQL, PostgreSQL, Tailwind CSS, REST APIs, Docker, GitHub Actions
+
+LANGUAGES
+Spanish (native), English (C1), French (B1)

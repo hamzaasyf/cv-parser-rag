@@ -1,0 +1,10 @@
+gradio>=6.0
+sentence-transformers>=3.0
+transformers>=4.56
+torch
+numpy>=1.24
+pypdfium2>=4.30
+python-docx>=1.1
+markdown-it-py>=3.0
+openai>=1.40
+anthropic>=0.40

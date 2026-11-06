@@ -1,0 +1,32 @@
+Omar Haddad
+MLOps Engineer
+Dubai, UAE · omar.haddad@example.com · +971 4 000 0389 · linkedin.com/in/omar-haddad-ops
+
+SUMMARY
+Platform engineer with 8 years in DevOps, the last 3 focused on MLOps. I build the infrastructure that lets data scientists train, deploy and monitor models safely.
+
+EXPERIENCE
+MLOps Engineer — Falcon Fintech
+May 2023 – Present
+- Built a Kubernetes model-serving platform that runs 60 models with canary releases.
+- Introduced the MLflow model registry and automated retraining with GitHub Actions.
+- Cut GPU spend by 35% with autoscaling and spot instances on AWS.
+
+DevOps Engineer — Gulfnet Telecom
+Jan 2018 – Apr 2023
+- Managed 400 Linux servers and moved core services to Docker and Kubernetes.
+- Wrote Terraform modules for AWS and Azure used by 12 teams.
+- Ran on-call and incident reviews, cutting monthly downtime from 9 hours to 40 minutes.
+
+EDUCATION
+BEng Computer Engineering — American University of Sharjah, 2017
+
+CERTIFICATIONS
+Certified Kubernetes Administrator (CKA), 2021
+AWS Certified Solutions Architect – Associate, 2020
+
+SKILLS
+Kubernetes, Docker, Terraform, AWS, Azure, Linux, Bash, Python, MLflow, GitHub Actions, Prometheus, Grafana
+
+LANGUAGES
+Arabic (native), English (fluent)

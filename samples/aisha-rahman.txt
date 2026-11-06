@@ -1,0 +1,33 @@
+Aisha Rahman
+Senior Machine Learning Engineer
+London, UK · aisha.rahman@example.com · +44 20 7946 0123 · linkedin.com/in/aisha-rahman-ml
+
+SUMMARY
+Machine learning engineer with 8 years building computer vision systems for retail and manufacturing. I take models from research notebooks to production on edge devices and cloud GPUs.
+
+EXPERIENCE
+Senior Machine Learning Engineer — Vantage Retail Analytics
+Mar 2022 – Present
+- Led a team of 4 engineers building people-counting and shelf-monitoring models used in 320 stores.
+- Deployed YOLOv8 detectors on NVIDIA Jetson devices with TensorRT, cutting latency from 85 ms to 21 ms.
+- Built an MLflow training pipeline on AWS that retrains store models every week and alerts on accuracy drift.
+
+Machine Learning Engineer — Northpoint Robotics
+Jul 2019 – Feb 2022
+- Developed defect-detection models in PyTorch for a car-parts production line, reaching 98.1% recall.
+- Wrote data augmentation and active-learning tools that halved labelling cost.
+- Containerised inference services with Docker and served them through FastAPI.
+
+Graduate Data Scientist — Halden Insurance
+Sep 2018 – Jun 2019
+- Built churn models with scikit-learn and XGBoost for 1.2 million policyholders.
+
+EDUCATION
+MSc Computer Vision — University of Surrey, 2018
+BSc Mathematics — University of Leeds, 2017
+
+SKILLS
+Python, PyTorch, TensorFlow, OpenCV, YOLO, TensorRT, ONNX, CUDA, NVIDIA Jetson, MLflow, Docker, FastAPI, AWS, SQL
+
+LANGUAGES
+English (native), Urdu (fluent)

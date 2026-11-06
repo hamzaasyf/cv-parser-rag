@@ -1,0 +1,27 @@
+Kenji Watanabe
+NLP Engineer
+Tokyo, Japan · kenji.watanabe@example.com · +81 3 0000 4417 · github.com/kwatanabe-nlp
+
+SUMMARY
+NLP engineer focused on large language models and retrieval-augmented generation, with 3 years building search, chat and document-understanding features in production.
+
+EXPERIENCE
+NLP Engineer — Shirakawa Legal Tech
+Apr 2024 – Present
+- Built a RAG system over 2 million contract clauses with LlamaIndex and a FAISS vector index; answer accuracy rose from 61% to 84%.
+- Fine-tuned a 7B LLM with LoRA to extract parties, dates and obligations from Japanese contracts.
+- Set up an evaluation pipeline that scores every prompt change before release.
+
+Machine Learning Engineer — Hoshi Commerce
+Apr 2023 – Mar 2024
+- Trained Hugging Face transformer models to categorise products in Japanese and English.
+- Served the models on GCP with Kubernetes and monitored drift with Prometheus and Grafana.
+
+EDUCATION
+MEng Information Science — Kyoto University, 2023
+
+SKILLS
+Python, PyTorch, Hugging Face, LLMs, RAG, LlamaIndex, LangChain, FAISS, LoRA, spaCy, GCP, Kubernetes, SQL
+
+LANGUAGES
+Japanese (native), English (business)

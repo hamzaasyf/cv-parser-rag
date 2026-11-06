@@ -1,0 +1,521 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>CV Parser RAG Demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100,500;112,600;112,800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap">
+<style>
+:root{
+  --bg:#F2F4F1; --surface:#FFFFFF; --ink:#16211D; --muted:#56645E; --line:#D6DDD8;
+  --accent:#0E6B62; --accent-soft:#DCEDE9; --track:#C4560A; --paper:#FBFAF7; --paper-ink:#1D2420;
+  --display:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  --serif:"Source Serif 4",Georgia,serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0E1513; --surface:#151F1C; --ink:#E3EAE6; --muted:#93A39C; --line:#26332F;
+  --accent:#53C4B5; --accent-soft:#16312C; --track:#F08A3C; --paper:#EEF0EC; --paper-ink:#18201C; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0E1513; --surface:#151F1C; --ink:#E3EAE6; --muted:#93A39C; --line:#26332F;
+  --accent:#53C4B5; --accent-soft:#16312C; --track:#F08A3C; --paper:#EEF0EC; --paper-ink:#18201C; color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.55 var(--body);padding:0 max(16px,env(safe-area-inset-left,0px)) 48px max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:1240px;margin:0 auto}
+h1,h2,h3{font-family:var(--display);margin:0;line-height:1.12;text-wrap:balance}
+p{margin:0}
+.eyebrow,.lbl{font-family:var(--mono);font-size:.7rem;text-transform:uppercase;letter-spacing:.12em;color:var(--muted)}
+button,input,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--track);outline-offset:2px;border-radius:3px}
+header{display:grid;gap:10px;padding:36px 0 20px;max-width:78ch}
+header h1{font-size:clamp(1.8rem,4vw,2.6rem);font-weight:800;font-stretch:112%;letter-spacing:-.02em}
+header h1 em{font-style:normal;color:var(--accent)}
+header p{color:var(--muted)}
+.status{font-family:var(--mono);font-size:.74rem;color:var(--muted);padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);margin-bottom:14px}
+.status b{color:var(--accent);font-weight:500}
+.tabs{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+.tabs button{display:flex;align-items:center;gap:8px;padding:9px 16px;border:1px solid var(--line);border-radius:8px;background:var(--surface);cursor:pointer;font-weight:500}
+.tabs button span{font-family:var(--mono);font-size:.7rem;color:var(--muted)}
+.tabs button.on{background:var(--accent);border-color:var(--accent);color:var(--bg)}
+.tabs button.on span{color:var(--bg);opacity:.8}
+.grid{display:grid;grid-template-columns:230px minmax(0,1fr) 330px;gap:14px;align-items:start}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;display:grid;gap:10px;align-content:start;min-width:0}
+.cands{display:grid;gap:6px}
+.cand{display:grid;gap:1px;text-align:left;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);cursor:pointer}
+.cand b{font-size:.92rem}.cand span{font-size:.8rem;color:var(--muted)}.cand em{font-style:normal;font-family:var(--mono);font-size:.68rem;color:var(--accent)}
+.cand.on{border-color:var(--accent);box-shadow:inset 3px 0 0 var(--accent)}
+.upload{display:block;text-align:center;border:1px dashed var(--line);border-radius:8px;padding:10px;cursor:pointer;color:var(--muted);font-size:.84rem}
+.upload:hover{border-color:var(--accent);color:var(--ink)}
+.paper{background:var(--paper);color:var(--paper-ink);border-radius:10px;padding:26px 30px;font-family:var(--serif);font-size:.93rem;line-height:1.5;box-shadow:0 1px 0 var(--line),0 12px 30px -24px #000;max-height:720px;overflow:auto}
+.doc-name{font-family:var(--display);font-weight:800;font-stretch:112%;font-size:1.6rem;line-height:1.1}
+.doc-title{font-family:var(--display);font-weight:600;font-size:1rem;color:#0E6B62;margin-top:2px}
+.doc-contact{font-family:var(--body);font-size:.78rem;color:#5b655f;margin-top:6px;padding-bottom:10px;border-bottom:1.5px solid #1d2420}
+.paper h4{font-family:var(--mono);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;margin:16px 0 6px;color:#0E6B62}
+.paper p{margin:0 0 4px}.paper ul{margin:2px 0 8px;padding-left:18px}.paper li{margin:2px 0}
+.doc-role{display:flex;justify-content:space-between;gap:10px;margin-top:8px;font-family:var(--body);font-size:.88rem}.doc-role span{color:#5b655f;white-space:nowrap;font-size:.8rem}
+.hit{background:rgba(240,138,60,calc(var(--a)*.45));box-shadow:0 0 0 2px rgba(240,138,60,calc(var(--a)*.45));border-radius:2px}
+.kv{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 12px;font-size:.86rem}.kv span{color:var(--muted)}.kv b{font-weight:500;overflow-wrap:anywhere}
+.fx{display:grid;gap:0;border-top:1px solid var(--line);padding-top:10px}.fx .big{font-family:var(--display);font-stretch:112%;font-weight:800;font-size:1.7rem;color:var(--accent);line-height:1.1}.fx small{color:var(--muted);font-size:.75rem}
+.tl{display:grid;gap:6px}.tlr{display:grid;gap:2px}.tlr span{font-size:.74rem;color:var(--muted)}.tlb{position:relative;height:8px;border-radius:4px;background:var(--line)}.tlb i{position:absolute;top:0;bottom:0;border-radius:4px;background:var(--accent)}
+.tlx{display:flex;justify-content:space-between;font-family:var(--mono);font-size:.64rem;color:var(--muted)}
+.skg{display:grid;gap:8px}.skg small{font-size:.7rem;color:var(--muted)}
+.chips{display:flex;gap:4px;flex-wrap:wrap;margin-top:2px}.chips span{font-family:var(--mono);font-size:.7rem;padding:2px 7px;border-radius:3px;border:1px solid var(--line);line-height:1.5}
+.chips span.ev{background:var(--accent-soft);border-color:transparent}
+.legend{font-size:.7rem;color:var(--muted)}.legend i{display:inline-block;width:10px;height:10px;border:1px solid var(--line);border-radius:2px;vertical-align:-1px}.legend i.ev{background:var(--accent-soft);border-color:transparent}
+.li{font-size:.86rem}
+.btn{display:inline-flex;justify-content:center;align-items:center;gap:8px;padding:8px 14px;border:1px solid var(--line);border-radius:6px;background:var(--surface);font-weight:500;font-size:.9rem;cursor:pointer}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--bg)}
+.btn:hover{border-color:var(--accent)}
+form.ask{display:flex;gap:8px}form.ask input{flex:1;min-width:0;padding:11px 14px;border:1px solid var(--line);border-radius:8px;background:var(--surface);font-size:1rem}
+.exs{display:flex;gap:6px;flex-wrap:wrap}.exs button{font-size:.8rem;padding:5px 10px;border:1px solid var(--line);border-radius:99px;background:var(--surface);cursor:pointer;color:var(--muted)}.exs button:hover{border-color:var(--accent);color:var(--ink)}
+.askgrid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:start;margin-top:12px}
+.answer{border-left:3px solid var(--accent);background:var(--surface);border-radius:0 10px 10px 0;padding:12px 16px;display:grid;gap:6px}
+.answer p{font-size:.98rem}.answer small{color:var(--muted)}.answer .also{font-size:.88rem;color:var(--muted)}
+.ranked{display:grid;gap:8px;margin-top:12px}
+.rk{display:grid;gap:6px;text-align:left;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);cursor:pointer}
+.rk.on{border-color:var(--accent);box-shadow:inset 3px 0 0 var(--accent)}
+.rkh{display:flex;align-items:center;gap:10px}.rkh .n{font-family:var(--mono);font-size:.72rem;color:var(--muted)}.rkh b{flex:1}.rkh .sc{font-family:var(--mono);font-size:.78rem;color:var(--accent)}
+.rk p{position:relative;display:grid;gap:1px;padding:5px 8px;border-radius:5px;background:var(--bg);overflow:hidden;font-size:.84rem}
+.rk p i{position:absolute;left:0;bottom:0;height:2px;background:var(--track)}.rk p small{font-family:var(--mono);font-size:.66rem;color:var(--muted)}
+textarea{width:100%;min-height:210px;padding:12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);font-size:.88rem;line-height:1.5;resize:vertical}
+.matchgrid{display:grid;grid-template-columns:330px minmax(0,1fr);gap:14px;align-items:start}
+.mr{display:grid;grid-template-columns:22px minmax(0,auto) minmax(0,1fr) 120px 44px;gap:10px;align-items:center;padding:7px 0;border-bottom:1px solid var(--line);font-size:.9rem}
+.mr .n{font-family:var(--mono);font-size:.72rem;color:var(--muted)}.mr .t{color:var(--muted);font-size:.8rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mr .bar{height:8px;border-radius:4px;background:var(--line);overflow:hidden}.mr .bar i{display:block;height:100%;background:var(--accent)}.mr .sc{font-family:var(--mono);font-size:.8rem;text-align:right}
+.heat{overflow-x:auto}.heat table{border-collapse:separate;border-spacing:4px;width:100%}
+.heat th{font-family:var(--mono);font-size:.68rem;color:var(--muted);font-weight:500;text-align:center;padding:2px 4px}.heat th:first-child{text-align:left}
+.heat td.req{font-size:.84rem;padding-right:8px;min-width:200px}
+.cell{width:100%;min-width:52px;height:36px;border:0;border-radius:6px;cursor:pointer;font-family:var(--mono);font-size:.76rem;font-weight:500;
+  background:color-mix(in srgb,var(--accent) calc(var(--v)*100%),var(--bg));color:var(--ink)}
+.cell.on{outline:2px solid var(--track);outline-offset:1px}
+.why{display:grid;gap:4px;border-top:1px solid var(--line);padding-top:10px}.why .q{font-size:.88rem;color:var(--muted)}
+.how{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:24px}
+.how div{border-top:2px solid var(--accent);padding-top:10px;display:grid;gap:4px}.how p{color:var(--muted);font-size:.88rem}
+footer{margin-top:22px;color:var(--muted);font-size:.82rem}
+@media (max-width:1050px){.grid{grid-template-columns:1fr}.cands{grid-template-columns:repeat(auto-fill,minmax(180px,1fr))}.askgrid,.matchgrid{grid-template-columns:1fr}.how{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:560px){.how{grid-template-columns:1fr}.paper{padding:18px}.mr{grid-template-columns:22px minmax(0,1fr) 70px 40px}.mr .t{display:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <span class="eyebrow">Live demo · runs in your browser · nothing is uploaded</span>
+  <h1>CV parser with RAG: <em>turn CVs into structured data</em>, then search them by meaning.</h1>
+  <p>Each CV is parsed into fields (contact, roles, dates, skills, education), split into context-aware chunks and embedded. Ask a question or paste a job description and the answer comes back with the exact CV lines that support it.</p>
+</header>
+<div class="status" id="status" aria-live="polite">Loading…</div>
+<div class="tabs" role="tablist">
+  <button type="button" role="tab" data-t="parse" class="on" aria-selected="true">Parse <span>01</span></button>
+  <button type="button" role="tab" data-t="ask" aria-selected="false">Ask across CVs <span>02</span></button>
+  <button type="button" role="tab" data-t="match" aria-selected="false">Match a job <span>03</span></button>
+</div>
+
+<section class="pane" id="p-parse">
+  <div class="grid">
+    <div class="card"><span class="lbl">Candidates</span><div class="cands" id="cands"></div>
+      <label class="upload"><input type="file" id="file" accept=".pdf,.txt,text/plain,application/pdf" hidden>+ Add a CV (PDF or .txt)</label></div>
+    <div class="paper" id="doc" aria-label="CV"></div>
+    <div class="card"><div style="display:flex;justify-content:space-between;align-items:center"><span class="lbl">Parsed fields</span><button class="btn" id="dljson" type="button">JSON</button></div><div id="fields" style="display:grid;gap:10px"></div></div>
+  </div>
+</section>
+
+<section class="pane" id="p-ask" hidden>
+  <form class="ask" id="askf"><input id="q" placeholder="Ask about all candidates, e.g. who has deployed models on edge devices?" aria-label="Question"><button class="btn primary" type="submit">Search</button></form>
+  <div class="exs" id="chips" style="margin-top:8px"></div>
+  <div class="askgrid">
+    <div><div class="answer" id="answer"></div><div class="ranked" id="ranked"></div></div>
+    <div class="paper" id="askdoc" aria-label="CV with retrieved passages highlighted"></div>
+  </div>
+</section>
+
+<section class="pane" id="p-match" hidden>
+  <div class="matchgrid">
+    <div class="card"><span class="lbl">Job description</span>
+<textarea id="jd" aria-label="Job description">Machine Learning Engineer (Computer Vision)
+- 5+ years building and shipping ML models in production
+- Strong PyTorch and computer vision experience
+- Deploying models on edge devices such as NVIDIA Jetson with TensorRT
+- MLOps: experiment tracking, automated retraining and model monitoring
+- Cloud experience, ideally AWS
+- Has led or mentored a small engineering team</textarea>
+      <button class="btn primary" id="matchbtn" type="button">Rank candidates</button>
+      <p style="font-size:.8rem;color:var(--muted)">Each line is one requirement. “N+ years” lines are checked against the parsed experience; the rest are matched by meaning against every CV chunk.</p></div>
+    <div class="card"><span class="lbl">Ranking</span><div id="mrank"></div><span class="lbl" style="margin-top:6px">Requirement coverage · click a cell for the evidence</span><div class="heat" id="heat"></div><div class="why" id="why"></div></div>
+  </div>
+</section>
+
+<section class="how" aria-label="How it works">
+  <div><span class="lbl">01 · Parse</span><h3>Structure the CV</h3><p>Sections, roles and date ranges are extracted; total experience merges overlapping jobs; 50+ skills are matched and tagged as used in a role or only listed.</p></div>
+  <div><span class="lbl">02 · Chunk</span><h3>Context-aware chunks</h3><p>Every bullet is stored with its role and company, so “Deployed YOLOv8…” still knows it happened at Vantage Retail.</p></div>
+  <div><span class="lbl">03 · Retrieve</span><h3>Hybrid search</h3><p>Questions are embedded with bge-small and compared to every chunk, blended with BM25 keyword scores so exact terms still count.</p></div>
+  <div><span class="lbl">04 · Ground</span><h3>Cite the evidence</h3><p>Answers and job-match scores point to the CV lines they came from, highlighted in the document.</p></div>
+</section>
+<footer>All five candidates are fictional and were written for this demo. Embeddings: bge-small-en-v1.5 via Transformers.js; PDFs read with PDF.js. Part of Muhammad Hamza Asif's portfolio.</footer>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+/* Fictional candidates written for this demo. Names, companies and contact details are invented. */
+const SAMPLE_CVS=[
+`Aisha Rahman
+Senior Machine Learning Engineer
+London, UK · aisha.rahman@example.com · +44 20 7946 0123 · linkedin.com/in/aisha-rahman-ml
+
+SUMMARY
+Machine learning engineer with 8 years building computer vision systems for retail and manufacturing. I take models from research notebooks to production on edge devices and cloud GPUs.
+
+EXPERIENCE
+Senior Machine Learning Engineer — Vantage Retail Analytics
+Mar 2022 – Present
+- Led a team of 4 engineers building people-counting and shelf-monitoring models used in 320 stores.
+- Deployed YOLOv8 detectors on NVIDIA Jetson devices with TensorRT, cutting latency from 85 ms to 21 ms.
+- Built an MLflow training pipeline on AWS that retrains store models every week and alerts on accuracy drift.
+
+Machine Learning Engineer — Northpoint Robotics
+Jul 2019 – Feb 2022
+- Developed defect-detection models in PyTorch for a car-parts production line, reaching 98.1% recall.
+- Wrote data augmentation and active-learning tools that halved labelling cost.
+- Containerised inference services with Docker and served them through FastAPI.
+
+Graduate Data Scientist — Halden Insurance
+Sep 2018 – Jun 2019
+- Built churn models with scikit-learn and XGBoost for 1.2 million policyholders.
+
+EDUCATION
+MSc Computer Vision — University of Surrey, 2018
+BSc Mathematics — University of Leeds, 2017
+
+SKILLS
+Python, PyTorch, TensorFlow, OpenCV, YOLO, TensorRT, ONNX, CUDA, NVIDIA Jetson, MLflow, Docker, FastAPI, AWS, SQL
+
+LANGUAGES
+English (native), Urdu (fluent)`,
+
+`Daniel Okafor
+Data Engineer
+Lagos, Nigeria (remote) · daniel.okafor@example.com · +234 1 700 0142 · github.com/dokafor-data
+
+SUMMARY
+Data engineer with 6 years designing batch and streaming pipelines. I own data platforms end to end, from ingestion to the dashboards the business reads.
+
+EXPERIENCE
+Senior Data Engineer — Paystride
+Jan 2023 – Present
+- Moved 140 daily batch jobs from cron scripts to Apache Airflow, cutting failed runs by 70%.
+- Built a Kafka streaming pipeline that delivers fraud features to the risk team within 5 seconds.
+- Modelled the finance warehouse in dbt on Snowflake with tested, documented tables.
+
+Data Engineer — Lumen Logistics
+Aug 2021 – Dec 2022
+- Wrote Spark jobs on AWS EMR that process 3 TB of shipment events per day.
+- Managed the data platform's AWS infrastructure with Terraform.
+
+Junior Data Engineer — Kora Health
+Sep 2020 – Jul 2021
+- Maintained PostgreSQL ETL jobs and built the first Metabase dashboards.
+
+EDUCATION
+BSc Computer Science — University of Lagos, 2020
+
+SKILLS
+Python, SQL, Spark, Airflow, Kafka, dbt, Snowflake, PostgreSQL, AWS, Terraform, Docker, Pandas
+
+LANGUAGES
+English (fluent), Yoruba (native)`,
+
+`Sofia Martínez
+Full-Stack Developer
+Madrid, Spain · sofia.martinez@example.com · +34 910 000 271 · sofiamartinez.dev
+
+SUMMARY
+Full-stack developer with 5 years shipping web products in React and Node.js. I care about fast, accessible interfaces and clean APIs.
+
+EXPERIENCE
+Full-Stack Developer — Clarabooks
+Feb 2023 – Present
+- Rebuilt the invoicing dashboard in React and TypeScript; page load fell from 4.2 s to 1.3 s.
+- Designed a GraphQL API in Node.js over PostgreSQL used by the web and mobile apps.
+- Added an in-app assistant that answers billing questions by searching help-centre articles.
+
+Frontend Developer — Viajero Travel
+Oct 2021 – Jan 2023
+- Built the booking flow in Next.js with server-side rendering and Tailwind CSS.
+- Brought 40 pages up to WCAG 2.1 AA accessibility.
+
+Web Developer Intern — Estudio Norte
+Mar 2021 – Sep 2021
+- Built marketing sites and REST API integrations for small businesses.
+
+EDUCATION
+BSc Software Engineering — Universidad Politécnica de Madrid, 2021
+
+SKILLS
+JavaScript, TypeScript, React, Next.js, Node.js, GraphQL, PostgreSQL, Tailwind CSS, REST APIs, Docker, GitHub Actions
+
+LANGUAGES
+Spanish (native), English (C1), French (B1)`,
+
+`Kenji Watanabe
+NLP Engineer
+Tokyo, Japan · kenji.watanabe@example.com · +81 3 0000 4417 · github.com/kwatanabe-nlp
+
+SUMMARY
+NLP engineer focused on large language models and retrieval-augmented generation, with 3 years building search, chat and document-understanding features in production.
+
+EXPERIENCE
+NLP Engineer — Shirakawa Legal Tech
+Apr 2024 – Present
+- Built a RAG system over 2 million contract clauses with LlamaIndex and a FAISS vector index; answer accuracy rose from 61% to 84%.
+- Fine-tuned a 7B LLM with LoRA to extract parties, dates and obligations from Japanese contracts.
+- Set up an evaluation pipeline that scores every prompt change before release.
+
+Machine Learning Engineer — Hoshi Commerce
+Apr 2023 – Mar 2024
+- Trained Hugging Face transformer models to categorise products in Japanese and English.
+- Served the models on GCP with Kubernetes and monitored drift with Prometheus and Grafana.
+
+EDUCATION
+MEng Information Science — Kyoto University, 2023
+
+SKILLS
+Python, PyTorch, Hugging Face, LLMs, RAG, LlamaIndex, LangChain, FAISS, LoRA, spaCy, GCP, Kubernetes, SQL
+
+LANGUAGES
+Japanese (native), English (business)`,
+
+`Omar Haddad
+MLOps Engineer
+Dubai, UAE · omar.haddad@example.com · +971 4 000 0389 · linkedin.com/in/omar-haddad-ops
+
+SUMMARY
+Platform engineer with 8 years in DevOps, the last 3 focused on MLOps. I build the infrastructure that lets data scientists train, deploy and monitor models safely.
+
+EXPERIENCE
+MLOps Engineer — Falcon Fintech
+May 2023 – Present
+- Built a Kubernetes model-serving platform that runs 60 models with canary releases.
+- Introduced the MLflow model registry and automated retraining with GitHub Actions.
+- Cut GPU spend by 35% with autoscaling and spot instances on AWS.
+
+DevOps Engineer — Gulfnet Telecom
+Jan 2018 – Apr 2023
+- Managed 400 Linux servers and moved core services to Docker and Kubernetes.
+- Wrote Terraform modules for AWS and Azure used by 12 teams.
+- Ran on-call and incident reviews, cutting monthly downtime from 9 hours to 40 minutes.
+
+EDUCATION
+BEng Computer Engineering — American University of Sharjah, 2017
+
+CERTIFICATIONS
+Certified Kubernetes Administrator (CKA), 2021
+AWS Certified Solutions Architect – Associate, 2020
+
+SKILLS
+Kubernetes, Docker, Terraform, AWS, Azure, Linux, Bash, Python, MLflow, GitHub Actions, Prometheus, Grafana
+
+LANGUAGES
+Arabic (native), English (fluent)`];
+
+</script>
+<script type="module">
+import {pipeline,env} from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2';
+env.allowLocalModels=false;
+const $=id=>document.getElementById(id);
+const esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const TODAY={y:2026,m:10};
+
+/* ---------- skill taxonomy: canonical name, category, aliases ---------- */
+const SKILLS=[
+ ['Python','Languages'],['JavaScript','Languages'],['TypeScript','Languages'],['SQL','Languages'],['Java','Languages'],['Go','Languages',['Golang']],['C++','Languages'],['Bash','Languages',['shell scripting']],
+ ['PyTorch','ML & AI'],['TensorFlow','ML & AI'],['scikit-learn','ML & AI',['sklearn']],['XGBoost','ML & AI'],['Hugging Face','ML & AI',['transformers library']],['OpenCV','ML & AI'],['YOLO','ML & AI',['YOLOv5','YOLOv8','YOLO11']],
+ ['TensorRT','ML & AI'],['ONNX','ML & AI'],['CUDA','ML & AI'],['NVIDIA Jetson','ML & AI',['Jetson']],['spaCy','ML & AI'],['Computer vision','ML & AI'],
+ ['LLMs','LLM & RAG',['large language models','LLM']],['RAG','LLM & RAG',['retrieval-augmented generation']],['LangChain','LLM & RAG'],['LlamaIndex','LLM & RAG'],['FAISS','LLM & RAG'],['LoRA','LLM & RAG'],['Prompt engineering','LLM & RAG'],
+ ['MLflow','MLOps & Cloud'],['Docker','MLOps & Cloud'],['Kubernetes','MLOps & Cloud',['k8s']],['Terraform','MLOps & Cloud'],['AWS','MLOps & Cloud',['EMR']],['GCP','MLOps & Cloud',['Google Cloud']],['Azure','MLOps & Cloud'],
+ ['GitHub Actions','MLOps & Cloud'],['Linux','MLOps & Cloud'],['Prometheus','MLOps & Cloud'],['Grafana','MLOps & Cloud'],
+ ['Spark','Data',['Apache Spark']],['Airflow','Data',['Apache Airflow']],['Kafka','Data'],['dbt','Data'],['Snowflake','Data'],['PostgreSQL','Data',['Postgres']],['Pandas','Data'],['Metabase','Data'],
+ ['React','Web'],['Next.js','Web'],['Node.js','Web'],['GraphQL','Web'],['REST APIs','Web',['REST API','REST']],['FastAPI','Web'],['Tailwind CSS','Web',['Tailwind']],['Accessibility','Web',['WCAG']]];
+const SKRE=SKILLS.map(([n,cat,al])=>({n,cat,re:new RegExp('(^|[^A-Za-z0-9+#.])('+[n,...(al||[])].map(a=>a.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('|')+')(?![A-Za-z0-9+#])',n==='dbt'||n==='spaCy'?'':'i')}));
+
+/* ---------- parser ---------- */
+const MON={jan:1,feb:2,mar:3,apr:4,may:5,jun:6,jul:7,aug:8,sep:9,oct:10,nov:11,dec:12};
+const DATE=/((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s+)?((?:19|20)\d\d)\s*[–—-]\s*((?:(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s+)?(?:(?:19|20)\d\d)|Present|Current|Now)/i;
+const HEAD={summary:/^(summary|profile|about( me)?|objective)$/i,experience:/^(experience|work experience|employment( history)?|professional experience)$/i,education:/^(education|academic background)$/i,
+  skills:/^(skills|technical skills|core skills|tech stack)$/i,languages:/^languages?$/i,certifications:/^(certifications?|licen[cs]es?( & certifications)?)$/i,projects:/^projects?$/i};
+function ym(mon,yr,end){const y=+yr;const m=mon?MON[mon.trim().slice(0,3).toLowerCase()]:(end?12:1);return{y,m}}
+function parseCV(text){
+  const lines=text.replace(/\r/g,'').split('\n').map(l=>l.trim());const cv={raw:text,name:'',title:'',email:'',phone:'',location:'',links:[],summary:'',roles:[],education:[],skills:[],languages:[],certifications:[],sections:[]};
+  const nonEmpty=lines.filter(Boolean);cv.name=nonEmpty[0]||'Unknown';
+  const em=text.match(/[\w.+-]+@[\w-]+\.[\w.]+/);if(em)cv.email=em[0];
+  const ph=text.match(/\+?\d[\d\s().-]{7,}\d/);if(ph)cv.phone=ph[0].trim();
+  cv.links=(text.match(/\b(?:linkedin\.com|github\.com)\/[\w\/-]+|\b[\w-]+\.(?:dev|io|me)\b/g)||[]);
+  // contact line: the first line holding an email/phone; location is its first plain part
+  const ci=lines.findIndex(l=>l.includes('@')||/\+\d/.test(l));
+  if(ci>=0){const parts=lines[ci].split(/\s*[·|•]\s*/);cv.location=parts.find(p=>!/@|\+?\d{3}|\.com|\.dev|\//.test(p))||'';
+    const t=lines.slice(1,ci).filter(Boolean);cv.title=t[0]||''}
+  let sec='header',cur=null,role=null;
+  for(let i=0;i<lines.length;i++){const l=lines[i];if(!l)continue;
+    const h=Object.keys(HEAD).find(k=>HEAD[k].test(l.replace(/:$/,'')));
+    if(h){sec=h;cur={name:h,lines:[]};cv.sections.push(cur);continue}
+    if(cur)cur.lines.push(l);
+    if(sec==='summary')cv.summary+=(cv.summary?' ':'')+l;
+    else if(sec==='experience'){
+      const d=l.match(DATE);
+      if(/^[-•*·]\s*/.test(l)){if(role)role.bullets.push(l.replace(/^[-•*·]\s*/,''))}
+      else if(d&&role&&!role.start){const s=ym(d[1],d[2]);const e=/present|current|now/i.test(d[3])?{...TODAY,present:true}:(()=>{const mm=d[3].match(/([A-Za-z]+)?\.?\s*((?:19|20)\d\d)/);return ym(mm[1],mm[2],true)})();role.start=s;role.end=e;role.dates=d[0]}
+      else{const m=l.split(/\s+[—–-]\s+|\s+at\s+|,\s+/);role={title:m[0],company:m.slice(1).join(', '),bullets:[],start:null,end:null,dates:''};cv.roles.push(role)}}
+    else if(sec==='education')cv.education.push(l);
+    else if(sec==='skills')cv.skills.push(...l.split(/\s*[,;·|•]\s*/).filter(Boolean));
+    else if(sec==='languages')cv.languages.push(...l.split(/\s*[,;·]\s*/).filter(Boolean));
+    else if(sec==='certifications')cv.certifications.push(l)}
+  // total experience: merge overlapping date ranges so parallel jobs are not double-counted
+  const iv=cv.roles.filter(r=>r.start).map(r=>[r.start.y*12+r.start.m,r.end.y*12+r.end.m]).sort((a,b)=>a[0]-b[0]);let months=0,ce=-1,cs=-1;
+  for(const [s,e] of iv){if(s>ce){if(ce>0)months+=ce-cs+1;cs=s;ce=e}else ce=Math.max(ce,e)}if(ce>0)months+=ce-cs+1;
+  cv.years=Math.round(months/12*10)/10;
+  cv.roles.forEach(r=>{if(r.start)r.years=Math.round(((r.end.y*12+r.end.m)-(r.start.y*12+r.start.m)+1)/12*10)/10});
+  // skills: listed ones plus any taxonomy skill evidenced in the text, with where it was seen
+  const found=new Map();
+  for(const s of SKRE){if(!s.re.test(text))continue;const inList=cv.skills.some(x=>s.re.test(' '+x));const inRoles=cv.roles.some(r=>r.bullets.some(b=>s.re.test(' '+b))||s.re.test(' '+r.title));found.set(s.n,{name:s.n,cat:s.cat,listed:inList,evidenced:inRoles})}
+  cv.skillMap=[...found.values()];
+  return cv;
+}
+
+/* ---------- chunking: each chunk carries its context so it embeds well on its own ---------- */
+function chunk(cv,ci){
+  const out=[];const add=(text,section,ctx,extra)=>out.push(Object.assign({cand:ci,text,section,embedText:(ctx?ctx+': ':'')+text},extra||{}));
+  if(cv.summary)add(cv.summary,'Summary',cv.name+', '+cv.title);
+  cv.roles.forEach((r,ri)=>{add(r.title+' at '+r.company+(r.dates?' ('+r.dates+')':''),'Experience','',{role:ri,head:true});r.bullets.forEach(b=>add(b,'Experience',r.title+' at '+r.company,{role:ri}))});
+  cv.education.forEach(e=>add(e,'Education','Education'));
+  cv.certifications.forEach(e=>add(e,'Certifications','Certification'));
+  if(cv.skills.length)add(cv.skills.join(', '),'Skills','Skills');
+  if(cv.languages.length)add('Speaks '+cv.languages.join(', '),'Languages','Languages');
+  return out;
+}
+
+/* ---------- embeddings + retrieval ---------- */
+let embed=null;const S={cvs:[],chunks:[],sel:0,tab:'parse',hl:new Map(),askRes:null,matchRes:null};
+// bge expects an instruction prefix on queries (not on passages) and CLS pooling
+const QPREFIX='Represent this sentence for searching relevant passages: ';
+async function vec(texts,query){const o=await embed(query?texts.map(t=>QPREFIX+t):texts,{pooling:'cls',normalize:true});return o.tolist()}
+/* BM25 keyword side of the hybrid search */
+const STOP=new Set('a an the and or of to in on for with by at from as is are was were be been has have had who what which that this these those i my me we our do does did can could any some all about into over under than then it its their them they he she his her you your experience years year'.split(' '));
+const IRREG={led:'lead',leading:'lead',leads:'lead',built:'build',building:'build',builds:'build',ran:'run',running:'run',wrote:'write',written:'write',mentored:'mentor',mentoring:'mentor',speaks:'speak',spoken:'speak',deployed:'deploy',deploying:'deploy',deployment:'deploy'};
+function toks(t){return t.toLowerCase().split(/[^a-z0-9+#]+/).filter(w=>w&&!STOP.has(w)).map(w=>IRREG[w]||(w.length>4?w.replace(/(ing|ed|es|s)$/,''):w))}
+function bm25(q){const qt=[...new Set(toks(q))];const docs=S.chunks.map(c=>c.tk||(c.tk=toks(c.embedText)));const N=docs.length,avg=docs.reduce((a,d)=>a+d.length,0)/N;
+  const df=Object.fromEntries(qt.map(t=>[t,docs.filter(d=>d.includes(t)).length]));
+  const sc=docs.map(d=>qt.reduce((a,t)=>{const f=d.filter(x=>x===t).length;if(!f)return a;const idf=Math.log(1+(N-df[t]+.5)/(df[t]+.5));return a+idf*f*2.2/(f+1.2*(.25+.75*d.length/avg))},0));
+  const mx=Math.max(...sc);return sc.map(v=>mx>0?v/mx:0)}
+const dot=(a,b)=>{let s=0;for(let i=0;i<a.length;i++)s+=a[i]*b[i];return s};
+function skillsIn(t){return SKRE.filter(s=>s.re.test(' '+t)).map(s=>s.n)}
+function keywordBonus(q,c){const qs=skillsIn(q);if(!qs.length)return 0;const cs=skillsIn(c.text);return qs.some(s=>cs.includes(s))?.08:0}
+async function ask(q){
+  const [qv]=await vec([q],true);const kw=bm25(q);
+  const scored=S.chunks.map((c,i)=>({c,s:dot(qv,c.v)+.2*kw[i]+keywordBonus(q,c),sem:dot(qv,c.v),kw:kw[i]})).sort((a,b)=>b.s-a.s);
+  const per=S.cvs.map((cv,i)=>{const mine=scored.filter(x=>x.c.cand===i);const top=mine.slice(0,3);return{i,score:top[0].s+.3*(top[1]?top[1].s:0),ev:top.filter(x=>x.s>=top[0].s-.12)}}).sort((a,b)=>b.score-a.score);
+  return{q,per,top:scored.slice(0,8)};
+}
+async function match(jd){
+  const ls=jd.split('\n').map(l=>l.trim()).filter(Boolean);const bul=ls.filter(l=>/^[-•*·]/.test(l));
+  const reqs=(bul.length?bul:ls).map(l=>l.replace(/^[-•*·]\s*/,'')).filter(l=>l.length>8).slice(0,10);
+  const title=ls[0]||'';const rv=await vec(reqs,true);
+  const rows=reqs.map((r,ri)=>{const yrs=r.match(/(\d+)\+?\s*years?/i);
+    return{req:r,cells:S.cvs.map((cv,ci)=>{
+      if(yrs){const need=+yrs[1];const v=Math.min(1,cv.years/need);return{v,why:cv.years+' years of experience (parsed from role dates)',kind:'years'}}
+      const kw=bm25(r);const best=S.chunks.map((c,i)=>({c,s:dot(rv[ri],c.v)+.2*kw[i]+keywordBonus(r,c)})).filter(x=>x.c.cand===ci).sort((a,b)=>b.s-a.s)[0];
+      return{v:Math.max(0,Math.min(1,(best.s-.58)/.32)),why:best.c.text,sec:best.c.section,raw:best.s,kind:'semantic'}})}});
+  const rank=S.cvs.map((cv,ci)=>({ci,score:rows.reduce((a,r)=>a+r.cells[ci].v,0)/rows.length})).sort((a,b)=>b.score-a.score);
+  return{title,rows,rank};
+}
+
+/* ---------- rendering ---------- */
+const CAT_ORDER=['Languages','ML & AI','LLM & RAG','MLOps & Cloud','Data','Web'];
+function cvDoc(ci,hl){
+  const cv=S.cvs[ci];const ch=S.chunks.filter(c=>c.cand===ci);const h=c=>{const v=hl&&hl.get(c);return v?' class="hit" style="--a:'+Math.max(.25,Math.min(1,v)).toFixed(2)+'"':''};
+  let s='<div class="doc-name">'+esc(cv.name)+'</div><div class="doc-title">'+esc(cv.title)+'</div><div class="doc-contact">'+esc([cv.location,cv.email,cv.phone,...cv.links].filter(Boolean).join(' · '))+'</div>';
+  const sum=ch.find(c=>c.section==='Summary');if(sum)s+='<h4>Summary</h4><p><span'+h(sum)+'>'+esc(sum.text)+'</span></p>';
+  if(cv.roles.length){s+='<h4>Experience</h4>';cv.roles.forEach((r,ri)=>{const head=ch.find(c=>c.role===ri&&c.head);s+='<div class="doc-role"><b'+h(head)+'>'+esc(r.title)+(r.company?' — '+esc(r.company):'')+'</b><span>'+esc(r.dates)+'</span></div><ul>'+ch.filter(c=>c.role===ri&&!c.head).map(c=>'<li><span'+h(c)+'>'+esc(c.text)+'</span></li>').join('')+'</ul>'})}
+  for(const [sec,lab] of [['Education','Education'],['Certifications','Certifications']]){const cs=ch.filter(c=>c.section===sec);if(cs.length)s+='<h4>'+lab+'</h4>'+cs.map(c=>'<p><span'+h(c)+'>'+esc(c.text)+'</span></p>').join('')}
+  const sk=ch.find(c=>c.section==='Skills');if(sk)s+='<h4>Skills</h4><p><span'+h(sk)+'>'+esc(sk.text)+'</span></p>';
+  const la=ch.find(c=>c.section==='Languages');if(la)s+='<h4>Languages</h4><p><span'+h(la)+'>'+esc(cv.languages.join(', '))+'</span></p>';
+  return s;
+}
+function fields(ci){
+  const cv=S.cvs[ci];const now=TODAY.y*12+TODAY.m,first=Math.min(...cv.roles.filter(r=>r.start).map(r=>r.start.y*12+r.start.m)),span=Math.max(12,now-first+1);
+  let s='<div class="kv"><span>Name</span><b>'+esc(cv.name)+'</b><span>Title</span><b>'+esc(cv.title)+'</b><span>Location</span><b>'+esc(cv.location||'–')+'</b><span>Email</span><b>'+esc(cv.email||'–')+'</b><span>Phone</span><b>'+esc(cv.phone||'–')+'</b></div>';
+  s+='<div class="fx"><span class="lbl">Total experience</span><b class="big">'+cv.years+' yrs</b><small>computed from role dates, overlaps merged</small></div>';
+  s+='<div class="tl">'+cv.roles.filter(r=>r.start).map(r=>{const a=(r.start.y*12+r.start.m-first)/span*100,w=((r.end.y*12+r.end.m)-(r.start.y*12+r.start.m)+1)/span*100;return'<div class="tlr"><div class="tlb"><i style="left:'+a.toFixed(1)+'%;width:'+w.toFixed(1)+'%"></i></div><span>'+esc(r.title)+' · '+r.years+' y</span></div>'}).join('')+'<div class="tlx"><span>'+Math.floor(first/12)+'</span><span>now</span></div></div>';
+  s+='<span class="lbl">Skills · '+cv.skillMap.length+' found</span><div class="skg">'+CAT_ORDER.map(cat=>{const xs=cv.skillMap.filter(k=>k.cat===cat);if(!xs.length)return'';return'<div><small>'+cat+'</small><div class="chips">'+xs.map(k=>'<span class="'+(k.evidenced?'ev':'')+'" title="'+(k.evidenced?'Used in a role':'Listed only')+'">'+esc(k.name)+'</span>').join('')+'</div></div>'}).join('')+'</div><small class="legend"><i class="ev"></i>used in a role &nbsp; <i></i>listed only</small>';
+  s+='<span class="lbl">Education</span>'+cv.education.map(e=>'<p class="li">'+esc(e)+'</p>').join('');
+  if(cv.certifications.length)s+='<span class="lbl">Certifications</span>'+cv.certifications.map(e=>'<p class="li">'+esc(e)+'</p>').join('');
+  s+='<span class="lbl">Languages</span><p class="li">'+esc(cv.languages.join(', '))+'</p>';
+  return s;
+}
+function jsonOf(ci){const cv=S.cvs[ci];return{name:cv.name,title:cv.title,location:cv.location,email:cv.email,phone:cv.phone,links:cv.links,total_experience_years:cv.years,
+  roles:cv.roles.map(r=>({title:r.title,company:r.company,start:r.start?r.start.y+'-'+String(r.start.m).padStart(2,'0'):null,end:r.end?(r.end.present?'present':r.end.y+'-'+String(r.end.m).padStart(2,'0')):null,years:r.years,highlights:r.bullets})),
+  skills:cv.skillMap.map(k=>({name:k.name,category:k.cat,used_in_role:k.evidenced})),education:cv.education,certifications:cv.certifications,languages:cv.languages}}
+function list(){
+  $('cands').innerHTML=S.cvs.map((cv,i)=>'<button type="button" class="cand'+(i===S.sel?' on':'')+'" data-i="'+i+'"><b>'+esc(cv.name)+'</b><span>'+esc(cv.title)+'</span><em>'+cv.years+' yrs · '+cv.skillMap.length+' skills</em></button>').join('');
+  $('cands').querySelectorAll('.cand').forEach(b=>b.addEventListener('click',()=>{S.sel=+b.dataset.i;renderAll()}));
+}
+function renderParse(){$('doc').innerHTML=cvDoc(S.sel);$('fields').innerHTML=fields(S.sel)}
+function renderAsk(){
+  const r=S.askRes;if(!r){$('answer').innerHTML='';$('ranked').innerHTML='';return}
+  // prefer a concrete achievement over the summary when it scores almost as well
+  const best=r.per[0],cv=S.cvs[best.i];const near=best.ev.filter(x=>x.s>=best.ev[0].s-.06);const spec=near.find(x=>x.c.section==='Experience'&&!x.c.head)||near.find(x=>x.c.section!=='Summary');const ev=(spec||best.ev[0]).c;const second=r.per[1];
+  $('answer').innerHTML='<span class="lbl">Answer · built from retrieved passages</span><p><b>'+esc(cv.name)+'</b> is the strongest match ('+esc(cv.title)+', '+cv.years+' yrs). Evidence: “'+esc(ev.text)+'”'+(ev.section==='Experience'&&ev.role!=null?' <small>('+esc(cv.roles[ev.role].title+' at '+cv.roles[ev.role].company)+')</small>':' <small>('+ev.section+')</small>')+'</p>'+
+    (second&&second.score>best.score*.8?'<p class="also">Also relevant: <b>'+esc(S.cvs[second.i].name)+'</b> — “'+esc(second.ev[0].c.text)+'”</p>':'');
+  $('ranked').innerHTML=r.per.map((p,k)=>'<button type="button" class="rk'+(p.i===S.sel?' on':'')+'" data-i="'+p.i+'"><div class="rkh"><span class="n">'+(k+1)+'</span><b>'+esc(S.cvs[p.i].name)+'</b><span class="sc">'+p.score.toFixed(2)+'</span></div>'+p.ev.slice(0,2).map(e=>'<p><i style="width:'+Math.round(Math.max(0,Math.min(1,(e.s-.5)/.5))*100)+'%"></i><span>'+esc(e.c.text)+'</span><small>'+e.c.section+' · '+e.s.toFixed(2)+'</small></p>').join('')+'</button>').join('');
+  $('ranked').querySelectorAll('.rk').forEach(b=>b.addEventListener('click',()=>{S.sel=+b.dataset.i;renderAsk();askDoc()}));
+  askDoc();
+}
+function askDoc(){const r=S.askRes;const hl=new Map();if(r)r.top.concat(r.per.find(p=>p.i===S.sel).ev).forEach(x=>{if(x.c.cand===S.sel)hl.set(x.c,Math.max(hl.get(x.c)||0,(x.s-.55)/.35))});
+  $('askdoc').innerHTML=cvDoc(S.sel,hl);const f=$('askdoc').querySelector('.hit');if(f)f.scrollIntoView({block:'nearest'})}
+function renderMatch(){
+  const m=S.matchRes;if(!m){$('heat').innerHTML='';$('mrank').innerHTML='';return}
+  const order=m.rank.map(r=>r.ci);
+  $('mrank').innerHTML=m.rank.map((r,k)=>'<div class="mr"><span class="n">'+(k+1)+'</span><b>'+esc(S.cvs[r.ci].name)+'</b><span class="t">'+esc(S.cvs[r.ci].title)+'</span><span class="bar"><i style="width:'+Math.round(r.score*100)+'%"></i></span><span class="sc">'+Math.round(r.score*100)+'%</span></div>').join('');
+  let h='<table><thead><tr><th>Requirement</th>'+order.map(ci=>'<th>'+esc(S.cvs[ci].name.split(' ')[0])+'</th>').join('')+'</tr></thead><tbody>';
+  m.rows.forEach((row,ri)=>{h+='<tr><td class="req">'+esc(row.req)+'</td>'+order.map(ci=>{const c=row.cells[ci];return'<td><button type="button" class="cell" data-r="'+ri+'" data-c="'+ci+'" style="--v:'+c.v.toFixed(2)+'" aria-label="'+esc(S.cvs[ci].name)+': '+Math.round(c.v*100)+'%">'+Math.round(c.v*100)+'</button></td>'}).join('')+'</tr>'});
+  $('heat').innerHTML=h+'</tbody></table>';
+  $('heat').querySelectorAll('.cell').forEach(b=>b.addEventListener('click',()=>showCell(+b.dataset.r,+b.dataset.c)));
+  // open on the top candidate's strongest meaning-based match rather than the years check
+  const top=order[0],sem=m.rows.map((r,i)=>[i,r.cells[top]]).filter(x=>x[1].kind!=='years').sort((a,b)=>b[1].v-a[1].v||b[1].raw-a[1].raw);
+  showCell(sem.length?sem[0][0]:0,top);
+}
+function showCell(r,c){const m=S.matchRes,cell=m.rows[r].cells[c];$('heat').querySelectorAll('.cell').forEach(b=>b.classList.toggle('on',+b.dataset.r===r&&+b.dataset.c===c));
+  $('why').innerHTML='<span class="lbl">Why this score</span><p><b>'+esc(S.cvs[c].name)+'</b> × “'+esc(m.rows[r].req)+'”</p><p class="q">'+(cell.kind==='years'?esc(cell.why):'“'+esc(cell.why)+'” <small>('+cell.sec+', similarity '+cell.raw.toFixed(2)+')</small>')+'</p>'}
+function renderAll(){list();if(S.tab==='parse')renderParse();if(S.tab==='ask')renderAsk();if(S.tab==='match')renderMatch()}
+
+/* ---------- pipeline ---------- */
+async function indexCV(text){const cv=parseCV(text);S.cvs.push(cv);const ci=S.cvs.length-1;const cs=chunk(cv,ci);const vs=await vec(cs.map(c=>c.embedText));cs.forEach((c,i)=>c.v=vs[i]);S.chunks.push(...cs);return ci}
+async function runAsk(q){$('q').value=q;S.askRes=await ask(q);S.sel=S.askRes.per[0].i;renderAll()}
+async function runMatch(){S.matchRes=await match($('jd').value);renderAll()}
+function setTab(t){S.tab=t;document.querySelectorAll('[role=tab]').forEach(b=>{const on=b.dataset.t===t;b.setAttribute('aria-selected',on);b.classList.toggle('on',on)});document.querySelectorAll('.pane').forEach(p=>p.hidden=p.id!=='p-'+t);
+  if(t==='ask'&&!S.askRes)runAsk(EX[0]);else if(t==='match'&&!S.matchRes)runMatch();else renderAll()}
+const EX=['Who has deployed models on edge devices?','Who has built a RAG system with a vector database?','Who can build real-time streaming data pipelines?','Experience running Kubernetes in production','Who speaks Spanish?','Who has led a team?'];
+$('chips').innerHTML=EX.map(e=>'<button type="button">'+esc(e)+'</button>').join('');
+$('chips').querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>runAsk(b.textContent)));
+$('askf').addEventListener('submit',e=>{e.preventDefault();const q=$('q').value.trim();if(q)runAsk(q)});
+$('matchbtn').addEventListener('click',runMatch);
+document.querySelectorAll('[role=tab]').forEach(b=>b.addEventListener('click',()=>setTab(b.dataset.t)));
+$('dljson').addEventListener('click',()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(jsonOf(S.sel),null,2)],{type:'application/json'}));a.download=S.cvs[S.sel].name.replace(/\s+/g,'_').toLowerCase()+'.json';document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500)});
+$('file').addEventListener('change',async e=>{const f=e.target.files[0];if(!f)return;let text='';
+  try{if(/pdf$/i.test(f.name)){const pdfjs=window.pdfjsLib;pdfjs.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';const doc=await pdfjs.getDocument({data:await f.arrayBuffer()}).promise;
+      for(let p=1;p<=doc.numPages;p++){const tc=await(await doc.getPage(p)).getTextContent();let last=null;for(const it of tc.items){if(last!==null&&Math.abs(it.transform[5]-last)>2)text+='\n';else if(last!==null)text+=' ';text+=it.str;last=it.transform[5]}text+='\n'}}
+    else text=await f.text();
+    $('status').textContent='Parsing '+f.name+'…';const ci=await indexCV(text);S.sel=ci;S.askRes=S.matchRes=null;status();setTab('parse')}catch(err){console.error(err);$('status').textContent='Could not read '+f.name+': '+err.message}
+  e.target.value=''});
+function status(st){$('status').innerHTML='<b>'+S.cvs.length+'</b> CVs parsed · <b>'+S.chunks.length+'</b> chunks indexed'+(st?' · embedded in <b>'+st+' ms</b>':'')+' · bge-small-en-v1.5 (384-d) + BM25 hybrid search · runs in your browser'}
+(async()=>{
+  try{$('status').textContent='Loading the embedding model (34 MB, cached after the first visit)…';
+    embed=await pipeline('feature-extraction','Xenova/bge-small-en-v1.5',{quantized:true});
+    const t0=performance.now();for(const t of SAMPLE_CVS)await indexCV(t);status(Math.round(performance.now()-t0));setTab('parse');document.body.classList.add('ready')}
+  catch(e){console.error(e);$('status').textContent='Could not load the embedding model: '+e.message}
+})();
+window.__S=S;window.__vec=vec;
+
+</script>
+</body>
+</html>
