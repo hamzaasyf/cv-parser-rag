@@ -2,7 +2,7 @@
 
 Turn CVs into structured data, ask questions across all of them, and rank candidates against a job description. Answers are written by an LLM from retrieved CV excerpts only, and every claim cites the excerpt it came from, so a recruiter can check it in one click.
 
-**Live demo:** [Hugging Face Space](https://huggingface.co/spaces/hamzaasyf/cv-parser-rag) · **Browser-only version:** [GitHub Pages](https://hamzaasyf.github.io/cv-parser-rag/)
+**Try it:** [browser version on GitHub Pages](https://hamzaasyf.github.io/cv-parser-rag/) (parsing, search and job matching, no LLM), or [run the full app locally](#run-locally) in a few minutes.
 
 ![Candidates ranked against a job description, requirement by requirement](assets/cover.png)
 
@@ -79,7 +79,7 @@ cv-parser-rag/
 
 - The parser expects common CV layouts (headed sections, one role per heading with a date range). Heavily designed two-column PDFs may come out in the wrong order, and scanned PDFs need OCR first.
 - Requirement scores are similarity scores, not a hiring decision. Use them to shortlist and check the cited evidence.
-- The free open model is small, so for nuanced comparisons an API model gives better answers. On Hugging Face, ZeroGPU gives each visitor a limited amount of free GPU time per day. When it runs out, answers fall back to search only.
+- The free open model is small, so for nuanced comparisons an API model gives better answers. If it is deployed on Hugging Face ZeroGPU, each visitor gets a limited amount of free GPU time per day, and answers fall back to search only when it runs out.
 
 ## Privacy
 
